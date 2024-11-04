@@ -73,18 +73,35 @@ async def handle_connection(reader, writer):
     print(data)
     writer.close()
 
-async def main():
+async def start_access_server(host:str, port:int, handler):
     """
-    Asynchronous server using `connect_accepted_socket`.
+    Starts an asynchronous server to handle incoming access requests.
     """
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_sock.bind(('localhost', 8082))
+    server_sock.bind((host, port))
     server_sock.listen()
+    server_sock.setblocking(False)
+
     loop = asyncio.get_running_loop()
-    
+    print(f"Server running on {host}:{port}...")
+
     while True:
-        client_sock, addr = server_sock.accept()
-        reader, writer = await asyncio.connect_accepted_socket(loop, client_sock)
-        loop.create_task(handle_connection(reader, writer))
+        client_sock, _ = await loop.sock_accept(server_sock)
+        
+        #Create a StreamReader
+        reader = asyncio.StreamReader()
+        #Create a StreamReaderProtocol to bind the reader to the client socket
+        protocol = asyncio.StreamReaderProtocol(reader)
+        #Use connect_accepted_socket to integrate the socket and protocol
+        transport, _ = await loop.connect_accepted_socket(lambda: protocol, client_sock)
+        
+        # create a StreamWriter
+        writer = asyncio.StreamWriter(transport, protocol, reader, loop)
+        # Start processing the request
+        asyncio.create_task(handler(reader, writer))
+
+
+async def main():
+    await start_access_server("localhost", 8082, handle_connection)
 
 asyncio.run(main())  
