@@ -1,7 +1,7 @@
 import asyncio
 
 async def send(data:str):
-    reader, writer = await asyncio.open_connection('localhost', 8082)
+    reader, writer = await asyncio.open_connection('localhost', 8083)
     writer.write(data.encode())
     await writer.drain()
 
@@ -9,4 +9,16 @@ async def send(data:str):
     print("Server response:", data.decode())
     writer.close()
 
-asyncio.run(send("test"))
+test_profiles = [
+    {"role": "admin", "name": "Alice"},
+    {"role": "member", "name": "Bob", "subscription_status": "active"},
+    {"role": "member", "name": "Charlie", "subscription_status": "inactive"},
+    {"role": "guest", "name": "David"},
+    {"role": "unknown", "name": "Eve"}
+]
+
+async def main():
+    for profile in test_profiles:
+        await send(str(profile))
+
+asyncio.run(main())
