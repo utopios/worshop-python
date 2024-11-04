@@ -69,3 +69,72 @@ reports_to_archive = {
 
 # Archiving the reports asynchronously
 asyncio.run(async_archive_reports(reports_to_archive))
+
+# Step 4: Reading and Analyzing Archived Reports
+
+from contextlib import ExitStack
+
+def read_multiple_reports(filenames: list):
+    """
+    Opens and reads multiple session report files in a single with statement.
+    """
+    try:
+        # with (open(filenames[0]) as f1, open(filenames[1]) as f2):
+        #     print("Report 1 contents: ", f1.read())
+        #     print("Report 2 contents: ", f2.read())
+
+        #with [open(filename) for filename in filenames] as files:
+        with ExitStack() as stack:
+            files = [stack.enter_context(open(filename)) for filename in filenames]
+            for i, file in enumerate(files, start=1):
+                 print(f"Report {i} contents: ", file.read())
+        
+        for file in filenames:
+            with open(file, "r") as f:
+               print(f"Report {i} contents: ", f.read()) 
+
+    except FileNotFoundError:
+        print("Error")
+
+# Example usage for Step 4
+report_filenames = ["session_report_2024-11-01.json", "session_report_2024-11-02.json"]
+#read_multiple_reports(report_filenames)
+
+
+### Async version of step 4
+
+def read_once(filename: str) -> str:
+    with open(filename) as file:
+        return file.read()
+
+async def async_read_report(filename: str) -> str:
+    """
+    Reads a single session report file asynchronously.
+    """
+    try:
+        #return await asyncio.to_thread(lambda: open(filename).read())
+        return await asyncio.to_thread(read_once, filename)
+    except FileNotFoundError:
+        print("Error")
+
+
+# async def async_read_report(filename: str) -> str:
+#     """
+#     Reads a single session report file asynchronously.
+#     """
+#     try:
+#         return read_once(filename)
+#     except FileNotFoundError:
+#         print("Error")
+
+
+async def async_read_reports(filenames: list):
+    """
+    Reads multiple session report files asynchronously.
+    """
+    tasks = [async_read_report(filename) for filename in filenames]
+    results = await asyncio.gather(*tasks)
+    for i, content in enumerate(results):
+        print(f"Report {i+1} contents:", content)
+
+asyncio.run(async_read_reports(report_filenames))

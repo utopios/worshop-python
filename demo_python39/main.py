@@ -78,3 +78,10 @@ from statistics import multimode
 data = [1, 2, 2, 3, 3,3, 4, 4, 4]
 modes = multimode(data)
 print("Modes in data", modes)
+
+
+def demo(*args, **kwargs):
+    print(args)
+    print(kwargs)    
+
+demo("1", "2", "23", cle="val", cle2="val2")
